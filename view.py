@@ -73,7 +73,7 @@ class View(QMainWindow):
         self.zielwaehrung_listwidget.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
 
         self.output_textedit.setDisabled(True)
-        self.output_textedit.setText('Hallo')
+        #self.output_textedit.setText('Hallo')
 
         currencies = list(self.controller.get_currencies())
         self.waehrung_combobox.addItems(currencies)
@@ -109,12 +109,22 @@ class View(QMainWindow):
         self.waehrung_combobox.setCurrentIndex(0)
         self.zielwaehrung_listwidget.clearSelection()
         self.zielwaehrung_listwidget.scrollToTop()
+        self.output_textedit.clear()
 
     def convert(self):
         to = str()
         for x in self.zielwaehrung_listwidget.selectedItems():
             to += x.text() + ','
         to = to[:-1]
-        print(str(self.betrag_spinbox.value()) + ", " + self.waehrung_combobox.currentText() + ", " + to)
-        self.controller.convert(self.betrag_spinbox.value(), self.waehrung_combobox.currentText(), to)
-
+        result = self.controller.convert(self.betrag_spinbox.value(), self.waehrung_combobox.currentText(), to)
+        self.output_textedit.setText(self.dict_to_text(result))
+    
+    def dict_to_text(self, input: dict) -> str:
+        if type(input) != dict:
+            return 'input was not a dictionary'
+        output = str()
+        output += str(input['betrag']) + ' ' + input['src'] + ' entsprechen' + '\n'
+        for key in input['converted']:
+            output += '\t' + str(input['converted'][key]['betrag_neu']) + ' ' + key + '(Kurs: ' + str(input['converted'][key]['kurs']) + ')' + '\n'
+        output += 'Stand: ' + str(input['date'])
+        return output
