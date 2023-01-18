@@ -4,49 +4,82 @@ import requests
 import json
 from datetime import datetime
 import view
+from static_converter import StaticConverter
+from live_converter import LiveConverter
 
-
+# Method for first contact with requests-package
 def first_api_call():
     r = requests.get('https://api.github.com/events')
     return r.status_code
 
 
+# Returns a json object containing a list with all available currencies
 def list_currency():
     url = "https://api.apilayer.com/currency_data/list"
     payload = {}
     headers = {"apikey": "Fx0f20iPjLla4EikRT1P4e7SH1EbkuWl"}
     
-    response = requests.request("GET", url, headers = headers, data = payload)
-    return response.text
+    try:
+        response = requests.request("GET", url, headers = headers, data = payload)
+    except:
+        return None
+    if response.status_code == 200:
+        return response.text
+    else:
+        return None
 
 
+# Returns a json object containing information about the conversion from one to an another currency
 def convert_currency(amount, from_c, to_c):
     url = "https://api.apilayer.com/currency_data/convert?to={0}&from={1}&amount={2}".format(to_c, from_c, amount)
     payload = {}
     headers = {"apikey": "Fx0f20iPjLla4EikRT1P4e7SH1EbkuWl"}
 
-    response = requests.request("GET", url, headers = headers, data = payload)
-    return response.text
+    try:
+        response = requests.request("GET", url, headers = headers, data = payload)
+    except:
+        return None
+    if response.status_code == 200:
+        return response.text
+    else:
+        return None
 
 
+# Returns a json object containing the conversion rates from one to x other currencies
+# This Method uses live conversion rates
 def live_currency(from_c, to_c):
     url = "https://api.apilayer.com/currency_data/live?source={0}&currencies={1}".format(from_c, to_c)
     payload = {}
     headers = {"apikey": "Fx0f20iPjLla4EikRT1P4e7SH1EbkuWl"}
 
-    response = requests.request("GET", url, headers = headers, data = payload)
-    return response.text
+    try:
+        response = requests.request("GET", url, headers = headers, data = payload)
+    except:
+        return None
+    if response.status_code == 200:
+        return response.text
+    else:
+        return None
 
 
+# Returns a json object containung all conversion rates from USD to every other available currency
 def plain_live_currency():
     url = "https://api.apilayer.com/currency_data/live"
     payload = {}
     headers = {"apikey": "Fx0f20iPjLla4EikRT1P4e7SH1EbkuWl"}
 
-    response = requests.request("GET", url, headers = headers, data = payload)
-    return response.text
+    try:
+        response = requests.request("GET", url, headers = headers, data = payload)
+    except:
+        return None
+    if response.status_code == 200:
+        return response.text
+    else:
+        return None
 
 
+# Returns a json object containing the conversion rates from one to x other currencies
+# This Method uses static conversion rates - last update 17.01.2023
 def static_currency(from_c, to_c):
     f = open(".\live_list.json", "r")
     quotes = f.read()
@@ -71,9 +104,10 @@ def static_currency(from_c, to_c):
 
 class Controller():
     def __init__(self):
-        #self.model = model.Spiel()
         self.view = view.View(self)
     
+    # Can be done with live or static data
+    # For developing the static list was used because of limited API calls
     def get_currencies(self) -> list:
         #currencies = list_currency()
         f = open(".\currency_list.json", "r")
@@ -84,12 +118,14 @@ class Controller():
             cur.append(c)
         return cur
     
+    # Converts an amount from on to x other currencies
     def convert(self, betrag: float, src: str, to: str, live:bool) -> dict:
         if live:
-            conversion = live_currency(src, to)
+            conversion = LiveConverter().get_courses(src, to)
+            if conversion is None: return None
             conversion = dict(json.loads(conversion))
         else:
-            conversion = static_currency(src, to)
+            conversion = StaticConverter().get_courses(src, to)
         quotes = dict(conversion['quotes'])
         converted = dict()
         converted['betrag'] = betrag
@@ -104,11 +140,6 @@ class Controller():
 
 
 if __name__ == '__main__':
-    #print(static_currency(10.0, 'BDT', 'AMD,ARS,AWG'))
-    #print(convert_currency("10", "EUR", "CHF"))
-    #list_currency())
-
-    
     app = QApplication([])
     c = Controller()
     c.view.show()

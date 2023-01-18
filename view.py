@@ -1,16 +1,12 @@
 from PyQt6.QtWidgets import *
 from PyQt6 import QtGui
 from PyQt6 import uic
-#from controller import Controller
 from main import Controller
 
 
 class View(QMainWindow):
 
     #Klassenvariablen
-
-    #dspB_amount: QDoubleSpinBox
-    #coB_from: QComboBox
 
     base_layout: QVBoxLayout
     top_layout: QHBoxLayout
@@ -74,7 +70,6 @@ class View(QMainWindow):
         self.zielwaehrung_listwidget.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
 
         self.output_textedit.setDisabled(True)
-        #self.output_textedit.setText('Hallo')
 
         currencies = list(self.controller.get_currencies())
         self.waehrung_combobox.addItems(currencies)
@@ -104,9 +99,11 @@ class View(QMainWindow):
 
         self.setWindowTitle('Currency Converter')
     
+    # Closes the application window
     def exit(self):
         self.close()
     
+    # Resets all information on the app to default
     def reset(self):
         self.betrag_spinbox.setValue(0)
         self.waehrung_combobox.setCurrentIndex(0)
@@ -114,14 +111,20 @@ class View(QMainWindow):
         self.zielwaehrung_listwidget.scrollToTop()
         self.output_textedit.clear()
 
+    # Takes the user input and displays the resulting conversions
     def convert(self):
         to = str()
         for x in self.zielwaehrung_listwidget.selectedItems():
             to += x.text() + ','
         to = to[:-1]
         result = self.controller.convert(self.betrag_spinbox.value(), self.waehrung_combobox.currentText(), to, self.livedaten_checkbox.isChecked())
-        self.output_textedit.setText(self.dict_to_text(result))
+        if result is None:
+            self.statusBar().showMessage('Abfrage fehlgeschlagen - versuche es mit offline Daten.')
+        else:
+            self.output_textedit.setText(self.dict_to_text(result))
+            self.statusBar().showMessage('Abfrage ok.')
     
+    # Is used to build the output
     def dict_to_text(self, input: dict) -> str:
         if type(input) != dict:
             return 'input was not a dictionary'
