@@ -18,10 +18,6 @@ def list_currency():
     
     response = requests.request("GET", url, headers = headers, data = payload)
     return response.text
-    if response.status_code == 200:
-        return response.json
-    else:
-        return response.status_code
 
 
 def convert_currency(amount, from_c, to_c):
@@ -31,10 +27,6 @@ def convert_currency(amount, from_c, to_c):
 
     response = requests.request("GET", url, headers = headers, data = payload)
     return response.text
-    if response.status_code == 200:
-        return response.json
-    else:
-        return response.status_code
 
 
 def live_currency(from_c, to_c):
@@ -44,10 +36,37 @@ def live_currency(from_c, to_c):
 
     response = requests.request("GET", url, headers = headers, data = payload)
     return response.text
-    if response.status_code == 200:
-        return response.json
-    else:
-        return response.status_code
+
+
+def plain_live_currency():
+    url = "https://api.apilayer.com/currency_data/live"
+    payload = {}
+    headers = {"apikey": "Fx0f20iPjLla4EikRT1P4e7SH1EbkuWl"}
+
+    response = requests.request("GET", url, headers = headers, data = payload)
+    return response.text
+
+
+def static_currency(from_c, to_c):
+    f = open(".\live_list.json", "r")
+    quotes = f.read()
+    quotes = json.loads(quotes)
+    conversion = quotes
+    conversion['source'] = from_c
+    quotes = quotes['quotes']
+    to_c = to_c.split(',')
+    
+    if from_c == 'USD': from_quote = 1
+    else: from_quote = quotes['USD'+from_c]
+    amount_in_usd = 1 / from_quote
+
+    to_quotes = dict()
+    for x in to_c:
+        if x != 'USD': to_quotes[from_c+x] = amount_in_usd*quotes['USD'+x]
+        else: to_quotes[from_c+x] = amount_in_usd
+
+    conversion['quotes'] = to_quotes
+    return conversion
 
 
 class Controller():
@@ -65,9 +84,12 @@ class Controller():
             cur.append(c)
         return cur
     
-    def convert(self, betrag: float, src: str, to: str) -> dict:
-        conversion = live_currency(src, to)
-        conversion = dict(json.loads(conversion))
+    def convert(self, betrag: float, src: str, to: str, live:bool) -> dict:
+        if live:
+            conversion = live_currency(src, to)
+            conversion = dict(json.loads(conversion))
+        else:
+            conversion = static_currency(src, to)
         quotes = dict(conversion['quotes'])
         converted = dict()
         converted['betrag'] = betrag
@@ -77,11 +99,12 @@ class Controller():
         for q in quotes:
             kurs = quotes[q]
             converted['converted'][q[3:]] = {'kurs': kurs, 'betrag_neu': kurs * betrag}
+        
         return converted
 
 
 if __name__ == '__main__':
-    #print(live_currency("EUR", "USD,CHF,DKK"))
+    #print(static_currency(10.0, 'BDT', 'AMD,ARS,AWG'))
     #print(convert_currency("10", "EUR", "CHF"))
     #list_currency())
 

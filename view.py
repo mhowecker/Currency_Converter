@@ -59,6 +59,7 @@ class View(QMainWindow):
         self.waehrung_combobox = QComboBox()
         self.zielwaehrung_listwidget = QListWidget()
         self.livedaten_checkbox = QCheckBox()
+        self.livedaten_checkbox.setChecked(True)
 
         self.umrechnen_pushbutton = QPushButton('Umrechnen')
         self.exit_pushbutton = QPushButton('Exit')
@@ -100,6 +101,8 @@ class View(QMainWindow):
         self.bot_layout.addWidget(self.reset_pushbutton)
 
         self.setCentralWidget(self.base_widget)
+
+        self.setWindowTitle('Currency Converter')
     
     def exit(self):
         self.close()
@@ -116,7 +119,7 @@ class View(QMainWindow):
         for x in self.zielwaehrung_listwidget.selectedItems():
             to += x.text() + ','
         to = to[:-1]
-        result = self.controller.convert(self.betrag_spinbox.value(), self.waehrung_combobox.currentText(), to)
+        result = self.controller.convert(self.betrag_spinbox.value(), self.waehrung_combobox.currentText(), to, self.livedaten_checkbox.isChecked())
         self.output_textedit.setText(self.dict_to_text(result))
     
     def dict_to_text(self, input: dict) -> str:
